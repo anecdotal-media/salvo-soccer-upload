@@ -5,13 +5,13 @@ Salvo Soccer ImageKit Upload V1 + Uppy test page, published on GitHub Pages with
 - [GitHub Pages uploader](https://anecdotal-media.github.io/salvo-soccer-upload/)
 - [Private backend and original uploader](https://salvo-soccer-upload-lab.fankymalloon.chatgpt.site)
 
-ImageKit is already configured on the private backend. On GitHub Pages, choose **Sign in to upload**, sign in as the owner in the opened window, and keep that window open while uploading. This authorizes your browser session to upload files and view the test-file listing. The ImageKit private key stays in the backend's secret environment.
+ImageKit is already configured on the private backend. Choose files and **Upload** on GitHub Pages. If your browser session needs authorization, a sign-in window opens before the transfer starts; the selected files upload automatically after sign-in. Keep that window open while uploading. You can also choose **Sign in to upload** to authorize the session before selecting files. The ImageKit private key stays in the backend's secret environment.
 
 ## Use it
 
-1. On GitHub Pages, choose **Sign in to upload** and complete sign-in in the opened window. If sign-in takes longer than two minutes, choose **Sign in to upload** again after signing in.
-2. Select a program and optionally enter a team or event.
-3. Drop or browse for photos/videos, then press Upload.
+1. Select a program and optionally enter a team or event.
+2. Drop or browse for photos/videos, then press **Upload**.
+3. If prompted, complete sign-in in the opened window. Your selected files are retained and the upload continues automatically. If the window is blocked or sign-in takes longer than two minutes, press Upload again after allowing the window or completing sign-in.
 4. Recent uploads persist in ImageKit. Open/copy delivery URLs, or try square cropping and grayscale previews.
 
 Destination: `/salvo-soccer/test-uploads/<program>`. Tags: `salvo-soccer`, `upload-test`, program, optional team/event. Unique filenames prevent overwrites. There is no delete route.

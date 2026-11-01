@@ -22,3 +22,64 @@ assert.ok(pages.includes('Sign in to upload'));
 assert.ok(!pages.includes('private_'),'Pages must not include private credentials');
 assert.ok(pages.includes("const fetch = window.salvoConnection.request;"));
 console.log('Passed: bridge authentication, allowed origin/opener, route allowlist, response targeting, Pages credential isolation.');
+
+// Regress the reported 0-of-0 failure: authorization must happen before Uppy starts.
+const elements = new Map();
+const element = selector => {
+  if (!elements.has(selector)) elements.set(selector, {
+    value: selector === '#program' ? 'club' : '', textContent: '', disabled: false,
+    className: '', listeners: {},
+    addEventListener(type, listener, capture) { this.listeners[type] = { listener, capture }; },
+    remove() {}, replaceChildren() {}, classList: { add() {} }
+  });
+  return elements.get(selector);
+};
+let ready = false, authorize, authorizationCalls = 0, transfers = 0, retries = 0;
+const selectedFiles = [{ id: 'selected-photo', name: 'Mac Photo.png' }];
+let uploader;
+class TestUppy {
+  constructor() { uploader = this; }
+  use() { return this; }
+  addPreProcessor() {}
+  on() {}
+  getFiles() { return selectedFiles; }
+  async upload() { transfers++; }
+  async retryAll() { retries++; }
+}
+const session = {
+  isReady: () => ready,
+  connect() { authorizationCalls++; return new Promise(resolve => { authorize = () => { ready = true; resolve(); }; }); },
+  async request(path) { return Response.json(path === '/api/config' ? { configured: true } : []); }
+};
+const moduleScript = pages.match(/<script type="module">([\s\S]*?)<\/script>/)[1].replace(/^import .*;$/gm, '');
+const pageContext = {
+  window: { SALVO_PAGES: true, salvoConnection: session, addEventListener() {} },
+  document: { querySelector: element }, Uppy: TestUppy, Dashboard: class {}, XHRUpload: class {},
+  URL, setTimeout, Response
+};
+await vm.runInNewContext('(async () => {' + moduleScript + '\n})()', pageContext);
+const gate = element('#uploader').listeners.click;
+assert.equal(gate.capture, true, 'Authorize before the uploader handles the click');
+let prevented = 0, stopped = 0;
+const click = () => ({ target: { closest: () => ({}) }, preventDefault() { prevented++; }, stopImmediatePropagation() { stopped++; } });
+gate.listener(click());
+assert.equal(authorizationCalls, 1, 'Open sign-in synchronously during the upload gesture');
+assert.equal(transfers, 0, 'No transfer starts while unsigned');
+assert.equal(selectedFiles[0].name, 'Mac Photo.png', 'Keep selected files during sign-in');
+gate.listener(click());
+assert.equal(authorizationCalls, 1, 'Repeated clicks do not start competing sign-ins');
+authorize(); await new Promise(resolve => setImmediate(resolve));
+assert.equal(transfers, 1, 'Resume the selected upload after authorization');
+assert.equal(element('#message').textContent, '');
+const before = prevented; gate.listener(click());
+assert.equal(prevented, before, 'An authorized upload follows the normal Uppy flow');
+ready = false; selectedFiles[0].error = new Error('A previous transfer failed');
+gate.listener(click()); authorize(); await new Promise(resolve => setImmediate(resolve));
+assert.equal(retries, 1, 'Reauthorize and retry a failed transfer when its session window closed');
+assert.equal(stopped, 3);
+session.connect = async () => { throw new Error('Allow the sign-in window.'); }; ready = false;
+gate.listener(click()); await new Promise(resolve => setImmediate(resolve));
+assert.equal(element('#message').textContent, 'Allow the sign-in window.');
+assert.equal(selectedFiles.length, 1, 'Blocked sign-in retains the file for another attempt');
+assert.equal(transfers, 1, 'Blocked sign-in does not start a failed transfer');
+console.log('Passed: unsigned-upload gating, selected-file retention, automatic resume, duplicate clicks, closed-session retry, blocked-popup recovery.');

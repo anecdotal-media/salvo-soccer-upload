@@ -21,6 +21,7 @@ window.salvoConnection = (() => {
     else request.resolve(new Response(JSON.stringify(data.body), { status: data.status }));
   });
   return {
+    isReady() { return Boolean(ready && popup && !popup.closed); },
     async connect() {
       ready = false;
       popup = window.open(origin + '/github-pages-bridge', 'salvo-imagekit-auth', 'width=520,height=420');
@@ -37,7 +38,7 @@ window.salvoConnection = (() => {
       popup.blur(); window.focus();
     },
     async request(path, options = {}) {
-      if (!ready || !popup || popup.closed) throw new Error('Choose “Sign in to upload” to continue your upload session.');
+      if (!ready || !popup || popup.closed) throw new Error('Your upload session ended. Choose Upload again to sign in and continue.');
       const id = crypto.randomUUID();
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => { pending.delete(id); reject(new Error('The upload service took too long to respond. Please try again.')); }, 30000);
@@ -56,20 +57,36 @@ if (!html.includes(marker)) throw new Error('Could not locate the connection ini
 html = html.replace(marker, `if(window.SALVO_PAGES){
   const connection = $('#connection');
   $('#empty').textContent = 'Sign in to view your test uploads.';
-  connection.addEventListener('click', async () => {
+  let signingIn = false;
+  async function signIn(resumeUpload = false) {
+    if (signingIn) return;
+    signingIn = true;
     connection.disabled = true; connection.textContent = 'Signing in…';
+    if (resumeUpload) $('#message').textContent = 'Complete sign-in in the opened window. Your selected files will upload automatically.';
     try {
       await window.salvoConnection.connect();
       const res = await fetch('/api/config'); const config = await res.json();
       if (!res.ok || !config.configured) throw new Error('The private server needs ImageKit configuration.');
       $('#message').textContent = ''; await loadRecent();
+      if (resumeUpload && uppy.getFiles().length) {
+        if (uppy.getFiles().some(file => file.error)) await uppy.retryAll();
+        else await uppy.upload();
+      }
     } catch(err) {
       connection.textContent = 'Sign in to upload'; connection.className = 'connection';
       $('#message').textContent = err.message;
-    } finally { connection.disabled = false; }
-  });
+    } finally { connection.disabled = false; signingIn = false; }
+  }
+  connection.addEventListener('click', () => { void signIn(); });
+  // Authorize during the button gesture, before Uppy starts preprocessing or transfer.
+  $('#uploader').addEventListener('click', event => {
+    const control = event.target.closest?.('.uppy-StatusBar-actionBtn--upload, .uppy-StatusBar-actionBtn--retry');
+    if (!control || window.salvoConnection.isReady()) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    void signIn(true);
+  }, true);
 } else ` + marker);
-html = html.replace('This is a test: use sample media', 'ImageKit is already configured. Sign in to upload, and keep the sign-in window open while uploading. This is a test: use sample media');
+html = html.replace('This is a test: use sample media', 'ImageKit is already configured. Choose your files and Upload; you’ll be prompted to sign in if needed. Keep the sign-in window open while uploading. This is a test: use sample media');
 html = html.replace('<head>', '<head><meta name="referrer" content="strict-origin-when-cross-origin">');
 await mkdir(new URL('../docs/', import.meta.url), { recursive: true });
 await writeFile(new URL('../docs/index.html', import.meta.url), html);

@@ -14,7 +14,7 @@ FORM: Established Salvo visual identity extended to a familiar upload workspace;
 <main class="wrap"><div class="intro"><div><h1>Share your side of the game.</h1><p>Bring the match, the team, and the moments in between to the club’s media library.</p></div><button type="button" class="connection" id="connection" style="cursor:pointer">Sign in to upload</button></div>
 <div class="workspace"><section class="upload-panel" aria-labelledby="upload-title"><div class="panel-heading"><h2 id="upload-title">Upload photos &amp; videos</h2><span class="step-note">Choose files. Review. Upload.</span></div><div class="uploader" id="uploader"><div class="fallback" id="loading"><strong>Loading the file uploader…</strong><p>You’ll be able to select or drop files here.</p></div></div></section>
 <aside class="side"><h2>Where they’ll go</h2><div class="field"><label for="program">Program</label><select id="program"><option value="club">Club / general</option><option value="academy">Salvo SC Academy</option><option value="rosemount">Rosemount</option><option value="two-rivers">Two Rivers</option><option value="woodbury">Woodbury</option></select></div><div class="field"><label for="team">Team or event <span style="font-weight:400">(optional)</span></label><input id="team" maxlength="60" placeholder="e.g. Fall Classic" autocomplete="off"></div><div class="folder" id="destination">/salvo-soccer/test-uploads/club</div><p class="help">New files stay in this dedicated test folder. Program and team labels are saved as tags.</p><div class="limits"><strong>File limits</strong><div><span>Photos</span><b>25 MB each</b></div><div><span>Videos</span><b>100 MB each</b></div><div><span>Per batch</span><b>20 files</b></div></div></aside></div>
-<p class="notice">ImageKit is already configured. Sign in to upload, and keep the sign-in window open while uploading. This is a test: use sample media you’re allowed to share. Uploaded files can be viewed by anyone with their ImageKit link.</p><div class="message" id="message" role="alert"></div>
+<p class="notice">ImageKit is already configured. Choose your files and Upload; you’ll be prompted to sign in if needed. Keep the sign-in window open while uploading. This is a test: use sample media you’re allowed to share. Uploaded files can be viewed by anyone with their ImageKit link.</p><div class="message" id="message" role="alert"></div>
 <section class="recent" id="recent" aria-labelledby="recent-title"><div class="recent-head"><div><h2 id="recent-title">Recent test uploads</h2><p style="font-size:13px;margin-top:5px">Your latest files, with a little room to experiment.</p></div><button class="button subtle" id="refresh">Refresh</button></div><div class="empty" id="empty">Loading recent files…</div><div class="gallery" id="gallery"></div></section>
 <footer><span>Salvo Soccer · ImageKit upload test</span><span>Built with <a href="https://uppy.io/" target="_blank" rel="noreferrer">Uppy</a> + <a href="https://imagekit.io/" target="_blank" rel="noreferrer">ImageKit</a></span></footer></main>
 <script>
@@ -35,6 +35,7 @@ window.salvoConnection = (() => {
     else request.resolve(new Response(JSON.stringify(data.body), { status: data.status }));
   });
   return {
+    isReady() { return Boolean(ready && popup && !popup.closed); },
     async connect() {
       ready = false;
       popup = window.open(origin + '/github-pages-bridge', 'salvo-imagekit-auth', 'width=520,height=420');
@@ -51,7 +52,7 @@ window.salvoConnection = (() => {
       popup.blur(); window.focus();
     },
     async request(path, options = {}) {
-      if (!ready || !popup || popup.closed) throw new Error('Choose “Sign in to upload” to continue your upload session.');
+      if (!ready || !popup || popup.closed) throw new Error('Your upload session ended. Choose Upload again to sign in and continue.');
       const id = crypto.randomUUID();
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => { pending.delete(id); reject(new Error('The upload service took too long to respond. Please try again.')); }, 30000);
@@ -90,17 +91,33 @@ $('#refresh').addEventListener('click',loadRecent);
 if(window.SALVO_PAGES){
   const connection = $('#connection');
   $('#empty').textContent = 'Sign in to view your test uploads.';
-  connection.addEventListener('click', async () => {
+  let signingIn = false;
+  async function signIn(resumeUpload = false) {
+    if (signingIn) return;
+    signingIn = true;
     connection.disabled = true; connection.textContent = 'Signing in…';
+    if (resumeUpload) $('#message').textContent = 'Complete sign-in in the opened window. Your selected files will upload automatically.';
     try {
       await window.salvoConnection.connect();
       const res = await fetch('/api/config'); const config = await res.json();
       if (!res.ok || !config.configured) throw new Error('The private server needs ImageKit configuration.');
       $('#message').textContent = ''; await loadRecent();
+      if (resumeUpload && uppy.getFiles().length) {
+        if (uppy.getFiles().some(file => file.error)) await uppy.retryAll();
+        else await uppy.upload();
+      }
     } catch(err) {
       connection.textContent = 'Sign in to upload'; connection.className = 'connection';
       $('#message').textContent = err.message;
-    } finally { connection.disabled = false; }
-  });
+    } finally { connection.disabled = false; signingIn = false; }
+  }
+  connection.addEventListener('click', () => { void signIn(); });
+  // Authorize during the button gesture, before Uppy starts preprocessing or transfer.
+  $('#uploader').addEventListener('click', event => {
+    const control = event.target.closest?.('.uppy-StatusBar-actionBtn--upload, .uppy-StatusBar-actionBtn--retry');
+    if (!control || window.salvoConnection.isReady()) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    void signIn(true);
+  }, true);
 } else try{const res=await fetch('/api/config');const config=await res.json();if(!res.ok||!config.configured)throw new Error('API setup needed');$('#connection').textContent='ImageKit configured';await loadRecent()}catch(err){$('#connection').textContent=err.message;$('#connection').classList.add('bad');$('#empty').textContent='Connect the server to ImageKit to load your test uploads.';$('#message').textContent='ImageKit is not configured yet. Please finish server setup before uploading.'}
 </script><script>window.addEventListener('error',e=>{if(e.target?.tagName==='SCRIPT'||document.querySelector('#loading')){const node=document.querySelector('#loading');if(node)node.textContent='The uploader could not load. Check your connection and reload the page.'}},true)</script></body></html>
