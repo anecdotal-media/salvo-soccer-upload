@@ -40,3 +40,6 @@ Native selects and inputs. Uppy Dashboard supplies selection, thumbnails, progre
 
 ## Do's and Don'ts
 Use real club assets. Keep credentials out of client code. Do not invent member submissions or upload counts.
+
+## Library extension
+The homepage is a management workspace: navy header, pale sidebar, broad search, compact filter row and a contact sheet of real assets. Default to all assets across folders, newest first. Use grid/list alternatives; inspect assets in a native dialog with preview and metadata. Preserve normal tab order, visible focus, semantic forms and mobile access to saved views. AI-generated labels use a muted green treatment and remain distinct from human tags. Plan restrictions are explained alongside AI tools. Source layouts live in web/ and are embedded into the deployment by scripts/compile.mjs.

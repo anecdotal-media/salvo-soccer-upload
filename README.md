@@ -2,8 +2,9 @@
 
 Salvo Soccer ImageKit Upload V1 + Uppy test page, published on GitHub Pages with an authenticated private signing backend.
 
-- [GitHub Pages uploader](https://anecdotal-media.github.io/salvo-soccer-upload/)
-- [Private backend and original uploader](https://salvo-soccer-upload-lab.fankymalloon.chatgpt.site)
+- [GitHub Pages media library](https://anecdotal-media.github.io/salvo-soccer-upload/)
+- [Upload media](https://anecdotal-media.github.io/salvo-soccer-upload/upload.html)
+- [Private library backend](https://salvo-soccer-upload-lab.fankymalloon.chatgpt.site)
 
 ImageKit is already configured on the private backend. Choose files and **Upload** on GitHub Pages. If your browser session needs authorization, a sign-in window opens before the transfer starts; the selected files upload automatically after sign-in. Keep that window open while uploading. You can also choose **Sign in to upload** to authorize the session before selecting files. The ImageKit private key stays in the backend's secret environment.
 
@@ -56,3 +57,19 @@ GitHub Pages publishes the committed `docs/` directory on `main`. After editing 
 - [Free-plan limits](https://imagekit.io/plans/)
 - [Uppy XHR](https://uppy.io/docs/xhr-upload/)
 - [Official Salvo Soccer branding](https://salvosoccer.org/)
+
+## Media library
+
+The GitHub Pages homepage is now the library. The upload page is at `upload.html`; the private server also serves it at `/upload`.
+
+- All assets across folders, newest first. The backend pages through the ImageKit account; the client builds a complete searchable index before reporting the loaded count.
+- Search names, tags, descriptions, custom metadata and AI labels. Program, media type and upload-date filters combine with the search.
+- Favorites and saved filter views persist on the current browser only, clearly labeled in the UI.
+- Select assets to copy public links or export a CSV manifest. Files remain in their original ImageKit folders.
+- Asset details include image/video previews, dimensions, size, upload date, folder and visibility. Save tags/descriptions directly to ImageKit.
+- Generate AI labels on an image using ImageKit's `aws-auto-tagging` extension, with a minimum 80% confidence and at most 12 labels. A run consumes 1 extension unit. No automatic tagging or repeat billing request is made during polling.
+- DAM Agent opens in ImageKit's own dashboard. Native visual search is Enterprise-only and isn't available on this free-tier integration.
+
+The private backend adds `GET /api/library`, `GET /api/asset`, `POST /api/asset/update` and `POST /api/asset/ai-tags`. All routes require the private owner session. Mutations validate origin, header, ID and allowed fields; the AI route permits only AWS auto-tagging. No delete endpoint is exposed.
+
+Editable source lives in `web/library.html`, `web/library.css`, `web/library.js`, `web/upload.html`, `src/server.mjs` and `src/bridge.html`. `scripts/compile.mjs` embeds everything into a single Worker module. `scripts/build-pages.mjs` generates both static Pages routes. Run `npm run build:pages`, `npm test` and `npm run build` before publishing. Both GitHub Pages and the private backend must be deployed for API changes.

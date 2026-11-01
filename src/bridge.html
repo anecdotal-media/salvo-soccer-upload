@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salvo Media · Secure session</title><style>body{font:16px/1.5 Arial,sans-serif;color:#173e59;max-width:440px;margin:48px auto;padding:24px}h1{font-size:25px}p{color:#536673}.badge{background:#173e59;color:white;padding:7px 12px;display:inline-block;border-radius:5px;font-size:13px}a{color:#173e59}</style></head><body><span class="badge">SALVO SOCCER</span><h1 id="title">Private library session</h1><p id="status">Return to the media library to continue. Keep this window open while using your library.</p><p><a href="https://anecdotal-media.github.io/salvo-soccer-upload/" target="_blank" rel="noopener">Open the Salvo media library</a></p><script>
+const allowedOrigin='https://anecdotal-media.github.io';
+const channel='salvo-imagekit-v1';
+window.addEventListener('message',async event=>{
+ if(event.origin!==allowedOrigin||event.source!==window.opener||!window.opener||event.data?.channel!==channel)return;
+ const data=event.data;
+ if(data.ping){document.querySelector('#title').textContent='Your library session is ready';document.querySelector('#status').textContent='Return to Salvo Media. Keep this window open; your API key stays on this server.';event.source.postMessage({channel,ready:true},allowedOrigin);return;}
+ const routes={'/api/config':'GET','/api/files':'GET','/api/library':'GET','/api/asset':'GET','/api/upload-auth':'POST','/api/asset/update':'POST','/api/asset/ai-tags':'POST'};
+ if(typeof data.id!=='string'||data.id.length>80||typeof data.path!=='string'||data.path.length>2048)return;
+ let target;try{target=new URL(data.path,location.origin)}catch{return;}
+ if(target.origin!==location.origin||routes[target.pathname]!==data.method)return;
+ if(data.body!==undefined&&(typeof data.body!=='string'||data.body.length>16000))return;
+ try{
+  const response=await fetch(target.pathname+target.search,{method:data.method,headers:{'X-Salvo-Request':'upload',...(data.method==='POST'?{'Content-Type':'application/json'}:{})},...(data.method==='POST'?{body:data.body||'{}'}:{})});
+  const body=await response.json();
+  event.source.postMessage({channel,id:data.id,status:response.status,body},allowedOrigin);
+ }catch{event.source.postMessage({channel,id:data.id,error:'The library service could not be reached. Please sign in again and retry.'},allowedOrigin)}
+});
+</script></body></html>

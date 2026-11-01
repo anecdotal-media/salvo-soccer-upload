@@ -6,6 +6,7 @@
     "build": "bash scripts/build.sh",
     "validate": "node scripts/validate-artifact.mjs",
     "build:pages": "node scripts/build-pages.mjs",
-    "test": "node scripts/test-api.mjs && node scripts/test-pages.mjs"
+    "test": "node scripts/test-api.mjs && node scripts/test-pages.mjs && node scripts/test-library.mjs",
+    "compile": "node scripts/compile.mjs"
   }
 }

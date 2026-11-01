@@ -1,8 +1,9 @@
 import { mkdir, writeFile } from 'node:fs/promises';
-import app from '../worker/index.js';
+import './compile.mjs';
+const {default:app}=await import('../worker/index.js');
 
 const origin = 'https://salvo-soccer-upload-lab.fankymalloon.chatgpt.site';
-let html = await (await app.fetch(new Request(origin), {})).text();
+let html = await (await app.fetch(new Request(origin+'/upload'), {})).text();
 const client = `
 window.SALVO_PAGES = true;
 window.salvoConnection = (() => {
@@ -24,7 +25,7 @@ window.salvoConnection = (() => {
     isReady() { return Boolean(ready && popup && !popup.closed); },
     async connect() {
       ready = false;
-      popup = window.open(origin + '/github-pages-bridge', 'salvo-imagekit-auth', 'width=520,height=420');
+      popup = window.open(origin + '/github-pages-bridge', 'salvo-imagekit-auth-'+Math.random().toString(36).slice(2), 'width=520,height=420');
       if (!popup) throw new Error('Allow the sign-in window, then choose “Sign in to upload” again.');
       await new Promise((resolve, reject) => {
         const started = Date.now();
@@ -43,7 +44,7 @@ window.salvoConnection = (() => {
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => { pending.delete(id); reject(new Error('The upload service took too long to respond. Please try again.')); }, 30000);
         pending.set(id, { resolve, reject, timer });
-        popup.postMessage({ channel, id, path, method: options.method || 'GET' }, origin);
+        popup.postMessage({ channel, id, path, method: options.method || 'GET', body: options.body }, origin);
       });
     }
   };
@@ -89,6 +90,9 @@ html = html.replace(marker, `if(window.SALVO_PAGES){
 html = html.replace('This is a test: use sample media', 'ImageKit is already configured. Choose your files and Upload; you’ll be prompted to sign in if needed. Keep the sign-in window open while uploading. This is a test: use sample media');
 html = html.replace('<head>', '<head><meta name="referrer" content="strict-origin-when-cross-origin">');
 await mkdir(new URL('../docs/', import.meta.url), { recursive: true });
-await writeFile(new URL('../docs/index.html', import.meta.url), html);
+await writeFile(new URL('../docs/upload.html', import.meta.url), html);
+let library=await(await app.fetch(new Request(origin),{})).text();
+library=library.replace('<script type=\"module\">','<script>'+client+'</script><script type=\"module\">');
+await writeFile(new URL('../docs/index.html',import.meta.url),library);
 await writeFile(new URL('../docs/.nojekyll', import.meta.url), '');
 console.log('Built GitHub Pages frontend in docs/. No API credentials included.');
