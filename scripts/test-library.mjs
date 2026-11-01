@@ -10,7 +10,7 @@ const req=(path,options={})=>new Request(origin+path,options);
 assert.equal((await app.fetch(req('/api/library'),env)).status,401);
 assert.equal((await app.fetch(req('/api/library?offset=-1',{headers:identity}),env)).status,400);
 assert.equal((await app.fetch(req('/api/asset?id=bad',{headers:identity}),env)).status,400);
-globalThis.fetch=async(url,options)=>{const parsed=new URL(url);assert.equal(parsed.searchParams.get('skip'),'100');assert.ok(!parsed.searchParams.has('path'),'Search across folders');assert.ok(parsed.searchParams.has('searchQuery'));return Response.json([asset]);};
+globalThis.fetch=async(url,options)=>{const parsed=new URL(url);assert.equal(parsed.searchParams.get('skip'),'100');assert.ok(!parsed.searchParams.has('path'),'Search across folders');assert.equal(parsed.searchParams.get('searchQuery'),'tags EXISTS OR tags NOT EXISTS');return Response.json([asset]);};
 const listing=await(await app.fetch(req('/api/library?offset=100',{headers:identity}),env)).json();assert.equal(listing.assets[0].filePath,asset.filePath);assert.equal(listing.assets[0].AITags[0].name,'Soccer');assert.equal(listing.nextOffset,null);
 const post=(path,body)=>req(path,{method:'POST',headers:{...identity,Origin:origin,'X-Salvo-Request':'upload','Content-Type':'application/json'},body:JSON.stringify(body)});
 assert.equal((await app.fetch(req('/api/asset/update',{method:'POST',headers:identity,body:'{}'}),env)).status,403);

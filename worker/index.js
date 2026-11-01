@@ -36,7 +36,7 @@ export default {
    }
    if(path==='/api/library'&&request.method==='GET'){
     const offset=Number(url.searchParams.get('offset')||0);if(!Number.isInteger(offset)||offset<0||offset>100000)return json({error:'Invalid library offset.'},400);
-    try{const query=new URLSearchParams({searchQuery:'createdAt >= "1970-01-01T00:00:00.000Z"',type:'file',sort:'DESC_CREATED',limit:'100',skip:String(offset)});const data=await imagekit(env,'/v1/files?'+query);if(!Array.isArray(data))throw new Error('ImageKit returned an unexpected library response.');return json({assets:data.filter(a=>a.fileId).map(shape),nextOffset:data.length===100?offset+100:null});}catch(error){return json({error:error.message},502)}
+    try{const query=new URLSearchParams({searchQuery:'tags EXISTS OR tags NOT EXISTS',type:'file',sort:'DESC_CREATED',limit:'100',skip:String(offset)});const data=await imagekit(env,'/v1/files?'+query);if(!Array.isArray(data))throw new Error('ImageKit returned an unexpected library response.');return json({assets:data.filter(a=>a.fileId).map(shape),nextOffset:data.length===100?offset+100:null});}catch(error){return json({error:error.message},502)}
    }
    if(path==='/api/asset'&&request.method==='GET'){
     const id=url.searchParams.get('id')||'';if(!idPattern.test(id))return json({error:'Invalid asset ID.'},400);
