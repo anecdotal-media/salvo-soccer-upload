@@ -1,9 +1,11 @@
 {
-  "name": "sites-worker-esm-starter",
+  "name": "salvo-soccer-upload",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "bash scripts/build.sh",
-    "validate": "node scripts/validate-artifact.mjs"
+    "validate": "node scripts/validate-artifact.mjs",
+    "build:pages": "node scripts/build-pages.mjs",
+    "test": "node scripts/test-api.mjs && node scripts/test-pages.mjs"
   }
 }
