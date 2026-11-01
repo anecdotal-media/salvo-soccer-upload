@@ -18,7 +18,7 @@ await listener({...event,data:{...event.data,path:'/api/delete'}});assert.equal(
 await listener(event);assert.equal(calls,1);assert.equal(messages[0].origin,event.origin);assert.equal(messages[0].body.body.token,'sample-token');
 const pages=await readFile(new URL('../docs/index.html',import.meta.url),'utf8');
 assert.ok(pages.includes('window.SALVO_PAGES = true'));
-assert.ok(pages.includes('Connect ImageKit'));
+assert.ok(pages.includes('Sign in to upload'));
 assert.ok(!pages.includes('private_'),'Pages must not include private credentials');
 assert.ok(pages.includes("const fetch = window.salvoConnection.request;"));
 console.log('Passed: bridge authentication, allowed origin/opener, route allowlist, response targeting, Pages credential isolation.');

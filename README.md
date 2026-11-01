@@ -5,11 +5,11 @@ Salvo Soccer ImageKit Upload V1 + Uppy test page, published on GitHub Pages with
 - [GitHub Pages uploader](https://anecdotal-media.github.io/salvo-soccer-upload/)
 - [Private backend and original uploader](https://salvo-soccer-upload-lab.fankymalloon.chatgpt.site)
 
-GitHub Pages hosts only static code. Choose **Connect ImageKit**, sign in as the owner in the connection window, and keep that window open while uploading. The page uses the private server for one-time upload signatures and the test-file listing. The ImageKit private key stays in the backend's secret environment.
+ImageKit is already configured on the private backend. On GitHub Pages, choose **Sign in to upload**, sign in as the owner in the opened window, and keep that window open while uploading. This authorizes your browser session to upload files and view the test-file listing. The ImageKit private key stays in the backend's secret environment.
 
 ## Use it
 
-1. On GitHub Pages, choose **Connect ImageKit** and sign in in the connection window. If sign-in takes longer than two minutes, choose Connect ImageKit again after signing in.
+1. On GitHub Pages, choose **Sign in to upload** and complete sign-in in the opened window. If sign-in takes longer than two minutes, choose **Sign in to upload** again after signing in.
 2. Select a program and optionally enter a team or event.
 3. Drop or browse for photos/videos, then press Upload.
 4. Recent uploads persist in ImageKit. Open/copy delivery URLs, or try square cropping and grayscale previews.
