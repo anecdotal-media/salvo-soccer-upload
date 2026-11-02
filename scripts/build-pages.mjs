@@ -57,7 +57,7 @@ const marker = "try{const res=await fetch('/api/config');";
 if (!html.includes(marker)) throw new Error('Could not locate the connection initializer.');
 html = html.replace(marker, `if(window.SALVO_PAGES){
   const connection = $('#connection');
-  $('#empty').textContent = 'Sign in to view your test uploads.';
+  $('#empty').textContent = 'Sign in to view recent uploads.';
   let signingIn = false;
   async function signIn(resumeUpload = false) {
     if (signingIn) return;
@@ -87,7 +87,7 @@ html = html.replace(marker, `if(window.SALVO_PAGES){
     void signIn(true);
   }, true);
 } else ` + marker);
-html = html.replace('This is a test: use sample media', 'ImageKit is already configured. Choose your files and Upload; you’ll be prompted to sign in if needed. Keep the sign-in window open while uploading. This is a test: use sample media');
+html = html.replace('<p class="notice">', '<p class="notice">Choose your files and Upload. Sign in if prompted, and keep the sign-in window open while uploading. ');
 html = html.replace('<head>', '<head><meta name="referrer" content="strict-origin-when-cross-origin">');
 await mkdir(new URL('../docs/', import.meta.url), { recursive: true });
 await writeFile(new URL('../docs/upload.html', import.meta.url), html);

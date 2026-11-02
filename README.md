@@ -1,6 +1,6 @@
-# Salvo Soccer upload lab
+# Salvo Soccer media library
 
-Salvo Soccer ImageKit Upload V1 + Uppy test page, published on GitHub Pages with an authenticated private signing backend.
+Salvo Soccer media library and uploader, published on GitHub Pages with an authenticated private backend.
 
 - [GitHub Pages media library](https://anecdotal-media.github.io/salvo-soccer-upload/)
 - [Upload media](https://anecdotal-media.github.io/salvo-soccer-upload/upload.html)
@@ -73,3 +73,7 @@ The GitHub Pages homepage is now the library. The upload page is at `upload.html
 The private backend adds `GET /api/library`, `GET /api/asset`, `POST /api/asset/update` and `POST /api/asset/ai-tags`. All routes require the private owner session. Mutations validate origin, header, ID and allowed fields; the AI route permits only AWS auto-tagging. No delete endpoint is exposed.
 
 Editable source lives in `web/library.html`, `web/library.css`, `web/library.js`, `web/upload.html`, `src/server.mjs` and `src/bridge.html`. `scripts/compile.mjs` embeds everything into a single Worker module. `scripts/build-pages.mjs` generates both static Pages routes. Run `npm run build:pages`, `npm test` and `npm run build` before publishing. Both GitHub Pages and the private backend must be deployed for API changes.
+
+## Interface wording
+
+The library and uploader use final product wording. Program names appear in destination summaries and folder breadcrumbs; legacy storage paths and system tags stay intact for compatibility. Internal routing tags are preserved when users edit descriptive tags.

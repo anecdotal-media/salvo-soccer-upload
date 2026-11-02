@@ -1,4 +1,5 @@
 const $ = selector => document.querySelector(selector);
+const SYSTEM_TAGS = new Set(['salvo-soccer','upload-test','Hosted API test']);
 const PROGRAMS = {club:'Club / general',academy:'Salvo SC Academy',rosemount:'Rosemount','two-rivers':'Two Rivers',woodbury:'Woodbury'};
 let assets=[], activeView='all', selected=new Set(), activeAsset=null, loading=false, signedIn=false, detailRevision=0;
 const storage = {
@@ -11,6 +12,7 @@ const api=(path,options={})=>window.SALVO_PAGES?window.salvoConnection.request(p
 const ready=()=>!window.SALVO_PAGES||window.salvoConnection.isReady();
 const typeOf=a=>a.fileType==='image'?'image':(/\.(mp4|mov|webm|m4v|avi)$/i.test(a.name)?'video':'other');
 const programOf=a=>a.filePath?.match(/\/salvo-soccer\/test-uploads\/([^/]+)\//)?.[1]||(a.tags||[]).find(t=>PROGRAMS[t])||'';
+function folderLabel(asset){const folder=asset.filePath?.substring(0,asset.filePath.lastIndexOf('/'))||'/';const prefix='/salvo-soccer/test-uploads';if(folder===prefix)return 'Salvo Soccer';if(folder.startsWith(prefix+'/'))return ['Salvo Soccer',...folder.slice(prefix.length+1).split('/').map(part=>PROGRAMS[part]||part)].join(' › ');return folder}
 const dateText=value=>value?new Date(value).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'Date unavailable';
 const sizeText=value=>Number(value)>=1000000?(value/1000000).toFixed(1)+' MB':Math.max(1,Math.round((Number(value)||0)/1000))+' KB';
 function node(tag,className,text){const element=document.createElement(tag);if(className)element.className=className;if(text!==undefined)element.textContent=text;return element}
@@ -29,7 +31,7 @@ function findAssets(list,state,now=Date.now()){
     const days=state.view==='recent'?Math.min(Number(state.days)||7,7):Number(state.days);
     if(days&&(!asset.createdAt||Date.parse(asset.createdAt)<now-days*86400000))return false;
     if(state.view==='favorites'&&!favorites.has(asset.fileId))return false;
-    const meaningful=(asset.tags||[]).filter(t=>!['salvo-soccer','upload-test',...Object.keys(PROGRAMS)].includes(t));
+    const meaningful=(asset.tags||[]).filter(t=>!['salvo-soccer','upload-test','Hosted API test',...Object.keys(PROGRAMS)].includes(t));
     if(state.view==='untagged'&&(meaningful.length||(asset.AITags||[]).length))return false;
     return true;
   }).sort((a,b)=>state.sort==='name'?a.name.localeCompare(b.name):state.sort==='oldest'?Date.parse(a.createdAt||0)-Date.parse(b.createdAt||0):Date.parse(b.createdAt||0)-Date.parse(a.createdAt||0));
@@ -50,7 +52,7 @@ function render(){
     thumb.addEventListener('click',()=>openAsset(asset));card.append(thumb);
     const body=node('div','asset-body'),name=node('button','asset-name',asset.name);name.addEventListener('click',()=>openAsset(asset));body.append(name,node('p','asset-meta',sizeText(asset.size)+(asset.width?' · '+asset.width+' × '+asset.height:'')));
     const footer=node('div','asset-footer');footer.append(node('span',null,PROGRAMS[programOf(asset)]||'ImageKit library'),node('time',null,dateText(asset.createdAt)));body.append(footer);
-    const tags=node('div','asset-tags');for(const tag of (asset.tags||[]).filter(t=>!['salvo-soccer','upload-test'].includes(t)).slice(0,2))tags.append(node('span','tag',PROGRAMS[tag]||tag));if(asset.AITags?.length)tags.append(node('span','tag ai',asset.AITags.length+' AI labels'));body.append(tags);card.append(body);grid.append(card);
+    const tags=node('div','asset-tags');for(const tag of (asset.tags||[]).filter(t=>!SYSTEM_TAGS.has(t)).slice(0,2))tags.append(node('span','tag',PROGRAMS[tag]||tag));if(asset.AITags?.length)tags.append(node('span','tag ai',asset.AITags.length+' AI labels'));body.append(tags);card.append(body);grid.append(card);
   }
   renderSelection();
 }
@@ -84,8 +86,8 @@ $('#export-selected').addEventListener('click',()=>{const csv=values=>values.map
 function renderSaved(){const container=$('#saved-views');container.replaceChildren();for(const view of savedViews){const row=node('div','saved-row'),button=node('button','saved-view',view.name),remove=node('button','remove-view','×');remove.setAttribute('aria-label','Remove saved view '+view.name);button.addEventListener('click',()=>{const s=view.filters;$('#search').value=s.q;$('#scope').value=s.scope;$('#filter-program').value=s.program;$('#filter-type').value=s.type;$('#filter-date').value=s.days;$('#sort').value=s.sort;setView(s.view||'all')});remove.addEventListener('click',()=>{savedViews=savedViews.filter(v=>v.id!==view.id);storage.write('views',savedViews);renderSaved()});row.append(button,remove);container.append(row)}if(!savedViews.length)container.append(node('p','muted small','Save a search and its filters for next time.'))}
 $('#save-view').addEventListener('click',()=>{$('#save-dialog').showModal();$('#view-name').focus()});$('#cancel-save').addEventListener('click',()=>$('#save-dialog').close());$('#save-view-form').addEventListener('submit',event=>{event.preventDefault();const name=$('#view-name').value.trim();if(!name)return;savedViews.push({id:crypto.randomUUID(),name,filters:filterState()});storage.write('views',savedViews);renderSaved();$('#save-dialog').close();$('#view-name').value='';toast('View saved on this browser.')});
 function populateDetail(asset){
-  activeAsset=asset;$('#asset-title').textContent=asset.name;$('#asset-summary').textContent=sizeText(asset.size)+(asset.width?' · '+asset.width+' × '+asset.height:'')+' · '+typeOf(asset);$('#description').value=asset.description||'';$('#asset-tags').value=(asset.tags||[]).join(', ');$('#detail-status').textContent='';$('#ai-state').textContent='';
-  const facts=$('#asset-facts');facts.replaceChildren();for(const [label,value]of [['Uploaded',dateText(asset.createdAt)],['Program',PROGRAMS[programOf(asset)]||'Not assigned'],['Folder',asset.filePath?.substring(0,asset.filePath.lastIndexOf('/'))||'/'],['Delivery',asset.isPrivateFile?'Private asset':'Public link']])facts.append(node('dt',null,label),node('dd',null,value));
+  activeAsset=asset;$('#asset-title').textContent=asset.name;$('#asset-summary').textContent=sizeText(asset.size)+(asset.width?' · '+asset.width+' × '+asset.height:'')+' · '+typeOf(asset);$('#description').value=asset.description||'';$('#asset-tags').value=(asset.tags||[]).filter(tag=>!SYSTEM_TAGS.has(tag)).join(', ');$('#detail-status').textContent='';$('#ai-state').textContent='';
+  const facts=$('#asset-facts');facts.replaceChildren();for(const [label,value]of [['Uploaded',dateText(asset.createdAt)],['Program',PROGRAMS[programOf(asset)]||'Not assigned'],['Folder',folderLabel(asset)],['Delivery',asset.isPrivateFile?'Private asset':'Public link']])facts.append(node('dt',null,label),node('dd',null,value));
   const url=asset.isPrivateFile?'':delivery(asset.url);$('#open-original').hidden=!url;$('#open-original').href=url;$('#copy-original').disabled=!url;$('#native-details').href='https://imagekit.io/dashboard/search?q='+encodeURIComponent(asset.name)+'&sort=DESC_CREATED';
   const preview=$('#preview-media');preview.replaceChildren();$('#preview-actions').replaceChildren();
   if(url&&(typeOf(asset)==='image'||typeOf(asset)==='video')){const media=node(typeOf(asset)==='video'?'video':'img');if(media.tagName==='VIDEO'){media.controls=true;media.preload='metadata';media.src=url}else{media.alt=asset.name;media.src=delivery(url,'w-1200,h-1000,c-at_max,f-auto,q-85')}preview.append(media);if(typeOf(asset)==='image'){for(const [label,tr]of [['Fit','w-1200,h-1000,c-at_max,f-auto,q-85'],['Square crop','w-800,h-800,fo-auto,f-auto,q-85'],['Grayscale','w-1200,h-1000,c-at_max,e-grayscale,f-auto,q-85']]){const button=node('button',null,label);button.setAttribute('aria-pressed',String(label==='Fit'));button.addEventListener('click',()=>{media.src=delivery(url,tr);for(const b of $('#preview-actions').children)b.setAttribute('aria-pressed','false');button.setAttribute('aria-pressed','true')});$('#preview-actions').append(button)}}}else preview.append(node('p','muted',asset.isPrivateFile?'Open this private asset in ImageKit to preview it.':'Open the original file to view this asset.'));
@@ -104,7 +106,7 @@ $('#close-detail').addEventListener('click',()=>{$('#asset-dialog').close();cons
 $('#copy-original').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(delivery(activeAsset.url));$('#detail-status').textContent='Delivery URL copied.'}catch{$('#detail-status').textContent='Clipboard access was blocked. Use Open original to copy the link.'}});
 $('#metadata-form').addEventListener('submit',event=>{
  event.preventDefault();if(!activeAsset)return;
- const id=activeAsset.fileId,description=$('#description').value.trim(),tags=$('#asset-tags').value.split(',').map(t=>t.trim()).filter(Boolean),button=$('#save-metadata');
+ const id=activeAsset.fileId,description=$('#description').value.trim(),tags=[...(activeAsset.tags||[]).filter(tag=>SYSTEM_TAGS.has(tag)),...$('#asset-tags').value.split(',').map(t=>t.trim()).filter(Boolean)],button=$('#save-metadata');
  button.disabled=true;
  void authorizedAction(async()=>{
   if(activeAsset?.fileId!==id||!$('#asset-dialog').open)return;
