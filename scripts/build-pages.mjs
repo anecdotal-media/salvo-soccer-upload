@@ -51,48 +51,12 @@ window.salvoConnection = (() => {
 })();
 `;
 html = html.replace('<script type="module">', '<script>' + client + '</script><script type="module">\nconst fetch = window.salvoConnection.request;');
-html = html.replace('<div class="connection" id="connection" role="status">Checking connection…</div>', '<button type="button" class="connection" id="connection" style="cursor:pointer">Sign in to upload</button>');
-html = html.replace("textContent='● ImageKit connected'", "textContent='● Signed in · Ready to upload'");
-const marker = "try{const res=await fetch('/api/config');";
-if (!html.includes(marker)) throw new Error('Could not locate the connection initializer.');
-html = html.replace(marker, `if(window.SALVO_PAGES){
-  const connection = $('#connection');
-  $('#empty').textContent = 'Sign in to view recent uploads.';
-  let signingIn = false;
-  async function signIn(resumeUpload = false) {
-    if (signingIn) return;
-    signingIn = true;
-    connection.disabled = true; connection.textContent = 'Signing in…';
-    if (resumeUpload) $('#message').textContent = 'Complete sign-in in the opened window. Your selected files will upload automatically.';
-    try {
-      await window.salvoConnection.connect();
-      const res = await fetch('/api/config'); const config = await res.json();
-      if (!res.ok || !config.configured) throw new Error('The private server needs ImageKit configuration.');
-      $('#message').textContent = ''; await loadRecent();
-      if (resumeUpload && uppy.getFiles().length) {
-        if (uppy.getFiles().some(file => file.error)) await uppy.retryAll();
-        else await uppy.upload();
-      }
-    } catch(err) {
-      connection.textContent = 'Sign in to upload'; connection.className = 'connection';
-      $('#message').textContent = err.message;
-    } finally { connection.disabled = false; signingIn = false; }
-  }
-  connection.addEventListener('click', () => { void signIn(); });
-  // Authorize during the button gesture, before Uppy starts preprocessing or transfer.
-  $('#uploader').addEventListener('click', event => {
-    const control = event.target.closest?.('.uppy-StatusBar-actionBtn--upload, .uppy-StatusBar-actionBtn--retry');
-    if (!control || window.salvoConnection.isReady()) return;
-    event.preventDefault(); event.stopImmediatePropagation();
-    void signIn(true);
-  }, true);
-} else ` + marker);
-html = html.replace('<p class="notice">', '<p class="notice">Choose your files and Upload. Sign in if prompted, and keep the sign-in window open while uploading. ');
 html = html.replace('<head>', '<head><meta name="referrer" content="strict-origin-when-cross-origin">');
 await mkdir(new URL('../docs/', import.meta.url), { recursive: true });
 await writeFile(new URL('../docs/upload.html', import.meta.url), html);
-let library=await(await app.fetch(new Request(origin),{})).text();
+await writeFile(new URL('../docs/index.html', import.meta.url), html);
+let library=await(await app.fetch(new Request(origin+'/library'),{})).text();
 library=library.replace('<script type=\"module\">','<script>'+client+'</script><script type=\"module\">');
-await writeFile(new URL('../docs/index.html',import.meta.url),library);
+await writeFile(new URL('../docs/library.html',import.meta.url),library);
 await writeFile(new URL('../docs/.nojekyll', import.meta.url), '');
 console.log('Built GitHub Pages frontend in docs/. No API credentials included.');

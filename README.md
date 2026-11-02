@@ -2,20 +2,25 @@
 
 Salvo Soccer media library and uploader, published on GitHub Pages with an authenticated private backend.
 
-- [GitHub Pages media library](https://anecdotal-media.github.io/salvo-soccer-upload/)
+- [GitHub Pages upload portal](https://anecdotal-media.github.io/salvo-soccer-upload/)
 - [Upload media](https://anecdotal-media.github.io/salvo-soccer-upload/upload.html)
 - [Private library backend](https://salvo-soccer-upload-lab.fankymalloon.chatgpt.site)
 
 ImageKit is already configured on the private backend. Choose files and **Upload** on GitHub Pages. If your browser session needs authorization, a sign-in window opens before the transfer starts; the selected files upload automatically after sign-in. Keep that window open while uploading. You can also choose **Sign in to upload** to authorize the session before selecting files. The ImageKit private key stays in the backend's secret environment.
 
-## Use it
+## Parent upload flow (prepared revision)
 
-1. Select a program and optionally enter a team or event.
-2. Drop or browse for photos/videos, then press **Upload**.
-3. If prompted, complete sign-in in the opened window. Your selected files are retained and the upload continues automatically. If the window is blocked or sign-in takes longer than two minutes, press Upload again after allowing the window or completing sign-in.
-4. Recent uploads persist in ImageKit. Open/copy delivery URLs, or try square cropping and grayscale previews.
+The homepage and `upload.html` both open the focused uploader. Staff management is at `library.html` (or `/library` on the backend). Parents see no library navigation, destination fields, previous submissions, or editing tools.
 
-Destination: `/salvo-soccer/test-uploads/<program>`. Tags: `salvo-soccer`, `upload-test`, program, optional team/event. Unique filenames prevent overwrites. There is no delete route.
+1. Open the team-specific link.
+2. Choose photos/videos, then press **Upload**.
+3. See a confirmation for successfully transferred files; failed files remain available for retry.
+
+Example link: `/?folder=woodbury/u12-orange&label=U12%20Orange`.
+
+`folder` is a relative path within `/salvo-soccer/test-uploads/`, beginning with a known program (`club`, `academy`, `rosemount`, `two-rivers`, `woodbury`). It accepts up to four path segments of letters, digits, underscores and hyphens. Invalid links stop instead of uploading into a fallback folder. `label` is the parent-facing destination name. Without link context the private prototype uses the existing `club` destination. Existing `program` and `team` links remain usable; use `folder` for distinct team folders.
+
+**Access remains owner-private.** The current sign-in bridge is retained for testing; this revision does not grant parents backend access. Before distributing links, implement a public, upload-only endpoint with server-validated invitations, folder binding, limits and abuse controls. Query parameters are not authorization. Do not expose the existing library or signing endpoint as a shortcut.
 
 Supported: JPEG, PNG, WebP, GIF, HEIC/HEIF, MP4, MOV, WebM. Photos ≤25 MB, videos ≤100 MB, 20 files/batch, two simultaneous transfers. Browser previews vary for HEIC and MOV.
 
@@ -26,7 +31,7 @@ Supported: JPEG, PNG, WebP, GIF, HEIC/HEIF, MP4, MOV, WebM. Photos ≤25 MB, vid
 - Uppy sends multipart files directly to `https://upload.imagekit.io/api/v1/files/upload`.
 - `GET /api/files`: authenticated server search for the latest 12 test-tagged assets, filtered to the dedicated folder.
 - `/github-pages-bridge`: authenticated connection window. Accepts messages only from its opener at `https://anecdotal-media.github.io`, and forwards only the three permitted API calls. No private key is sent through this bridge.
-- `docs/index.html`: generated, credential-free GitHub Pages frontend. Public visitors can see the interface; API access requires the owner's private backend session.
+- `docs/index.html` and `docs/upload.html`: generated, credential-free upload frontend. `docs/library.html` is the separate staff workspace. Public visitors can see the interface; API access requires the owner's private backend session.
 - ImageKit URL transformations preserve originals.
 - Uppy v6.0.5 loads from the official Transloadit release CDN. No Uppy account or paid service required.
 
@@ -60,7 +65,7 @@ GitHub Pages publishes the committed `docs/` directory on `main`. After editing 
 
 ## Media library
 
-The GitHub Pages homepage is now the library. The upload page is at `upload.html`; the private server also serves it at `/upload`.
+The upload portal is the homepage. The staff library is at `library.html`; the private server also serves it at `/library`.
 
 - All assets across folders, newest first. The backend pages through the ImageKit account; the client builds a complete searchable index before reporting the loaded count.
 - Search names, tags, descriptions, custom metadata and AI labels. Program, media type and upload-date filters combine with the search.

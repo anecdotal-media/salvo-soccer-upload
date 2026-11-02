@@ -53,9 +53,9 @@ const session = {
 };
 const moduleScript = pages.match(/<script type="module">([\s\S]*?)<\/script>/)[1].replace(/^import .*;$/gm, '');
 const pageContext = {
-  window: { SALVO_PAGES: true, salvoConnection: session, addEventListener() {} },
+  window: { SALVO_PAGES: true, location: {search:''}, salvoConnection: session, addEventListener() {} },
   document: { querySelector: element }, Uppy: TestUppy, Dashboard: class {}, XHRUpload: class {},
-  URL, setTimeout, Response
+  URL, URLSearchParams, setTimeout, Response
 };
 await vm.runInNewContext('(async () => {' + moduleScript + '\n})()', pageContext);
 const gate = element('#uploader').listeners.click;
@@ -83,3 +83,16 @@ assert.equal(element('#message').textContent, 'Allow the sign-in window.');
 assert.equal(selectedFiles.length, 1, 'Blocked sign-in retains the file for another attempt');
 assert.equal(transfers, 1, 'Blocked sign-in does not start a failed transfer');
 console.log('Passed: unsigned-upload gating, selected-file retention, automatic resume, duplicate clicks, closed-session retry, blocked-popup recovery.');
+
+// Destination links resolve without asking contributors to navigate the library.
+const contextSource=moduleScript.slice(moduleScript.indexOf('function uploadContext('),moduleScript.indexOf('\nlet context;'));
+const routing=vm.createContext({URLSearchParams});vm.runInContext(contextSource,routing);
+const folder=vm.runInContext("uploadContext('?folder=woodbury/u12-orange&label=U12%20Orange')",routing);
+assert.equal(folder.folder,'/salvo-soccer/test-uploads/woodbury/u12-orange');assert.equal(folder.label,'U12 Orange');
+for(const query of ['?folder=../private','?folder=woodbury//other','?folder=/woodbury','?folder=unknown','?folder=woodbury%2F..%2Fprivate','?folder='])assert.throws(()=>routing.uploadContext(query));
+assert.equal(routing.uploadContext('').folder,'/salvo-soccer/test-uploads/club');
+const home=await readFile(new URL('../docs/index.html',import.meta.url),'utf8');
+assert.equal(home,pages,'Both public entry routes open the uploader');
+assert.ok(!home.includes('id="gallery"'));assert.ok(!home.includes('id="program"'));assert.ok(!home.includes("fetch('/api/files')"));
+const staff=await readFile(new URL('../docs/library.html',import.meta.url),'utf8');assert.ok(staff.includes('Search media'));
+console.log('Passed: destination link parsing, invalid-path rejection, upload-only landing page, separate staff library.');

@@ -27,7 +27,7 @@ Navy owns the header and primary actions. Burnt orange supplies the active tab a
 System sans for forms and content; bold compact headings. Fixed rem sizes, no decorative type in controls.
 
 ## Layout
-Desktop two-column workspace: large upload area and narrow destination summary. Below 800px stack destination before uploader. Recent files form a responsive grid.
+Parent portal: one centered column, small club header, task heading, optional read-only team label, uploader, concise limits and permission notice. File selection leads the page. Destination comes from the invitation link. Confirmation appears only after a successful upload.
 
 ## Elevation & Depth
 Use borders for separation, no card shadows.
@@ -42,4 +42,10 @@ Native selects and inputs. Uppy Dashboard supplies selection, thumbnails, progre
 Use real club assets. Keep credentials out of client code. Do not invent member submissions or upload counts.
 
 ## Library extension
-The homepage is a management workspace: navy header, pale sidebar, broad search, compact filter row and a contact sheet of real assets. Default to all assets across folders, newest first. Use grid/list alternatives; inspect assets in a native dialog with preview and metadata. Preserve normal tab order, visible focus, semantic forms and mobile access to saved views. AI-generated labels use a muted green treatment and remain distinct from human tags. Plan restrictions are explained alongside AI tools. Source layouts live in web/ and are embedded into the deployment by scripts/compile.mjs.
+The separate staff library at library.html is a management workspace: navy header, pale sidebar, broad search, compact filter row and a contact sheet of real assets. Default to all assets across folders, newest first. Use grid/list alternatives; inspect assets in a native dialog with preview and metadata. Preserve normal tab order, visible focus, semantic forms and mobile access to saved views. AI-generated labels use a muted green treatment and remain distinct from human tags. Plan restrictions are explained alongside AI tools. Source layouts live in web/ and are embedded into the deployment by scripts/compile.mjs.
+
+
+## Parent portal simplification
+Removed folder/program controls, recent uploads, image effects, delivery-link actions, library navigation and vendor credits from the contributor surface. These distracted from the single upload task; asset management remains in the staff library. Existing owner authentication is preserved pending a separate public invitation backend.
+
+The portal keeps incumbent Arial typography and existing neutral, error and hover colors for consistency. A team label is context, never an editable field. No decorative animation is needed for this task.

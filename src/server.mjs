@@ -57,8 +57,8 @@ export default {
    }
    return json({error:'Not found'},404);
   }
-  if(!['/','/upload','/upload.html'].includes(path))return new Response('Not found',{status:404});
+  if(!['/','/upload','/upload.html','/library','/library.html'].includes(path))return new Response('Not found',{status:404});
   if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405});
-  return new Response(request.method==='HEAD'?null:path==='/'?libraryPage:page,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','Content-Security-Policy':"default-src 'self'; script-src 'self' 'unsafe-inline' https://releases.transloadit.com; style-src 'self' 'unsafe-inline' https://releases.transloadit.com; img-src 'self' data: blob: https://ik.imagekit.io; media-src blob: https://ik.imagekit.io; connect-src 'self' https://upload.imagekit.io; font-src 'self' https://releases.transloadit.com; object-src 'none'; base-uri 'none'; form-action 'self'"}});
+  return new Response(request.method==='HEAD'?null:['/library','/library.html'].includes(path)?libraryPage:page,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','Content-Security-Policy':"default-src 'self'; script-src 'self' 'unsafe-inline' https://releases.transloadit.com; style-src 'self' 'unsafe-inline' https://releases.transloadit.com; img-src 'self' data: blob: https://ik.imagekit.io; media-src blob: https://ik.imagekit.io; connect-src 'self' https://upload.imagekit.io; font-src 'self' https://releases.transloadit.com; object-src 'none'; base-uri 'none'; form-action 'self'"}});
  }
 };
